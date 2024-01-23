@@ -147,18 +147,6 @@ struct cusparseCsr
   float* csrVal;
 };
 
-struct computeTimer
-{
-  double add_glob = 0;
-  double compute_el = 0;
-  double sort_coo = 0;
-  double convert_coo = 0;
-  double convert_coo_tot = 0;
-  double convert_csr_tot = 0;
-  double convert_tot = 0;
-  double iter_time = 0;
-  double compute_tot = 0;
-};
 #endif
 
 /*---------------------------------------------------------------------------*/
@@ -207,7 +195,6 @@ class FemModule
   DoFLinearSystem m_linear_system;
   IItemFamily* m_dof_family = nullptr;
   FemDoFsOnNodes m_dofs_on_nodes;
-  bool m_register_time = false;
   bool m_arcane_timer = false;
   Integer m_cache_warming = 1;
   bool m_use_coo = false;
@@ -289,8 +276,7 @@ class FemModule
   //#endif
 #ifdef USE_CUSPARSE_ADD
   void printCsrMatrix(std::string fileName, cusparseCsr csr, bool is_coo);
-  void _computeCusparseElementMatrix(cusparseCsr& result, cusparseCsr& global, Cell icell, cusparseHandle_t handle, IndexedNodeDoFConnectivityView node_dof,
-                                     computeTimer& timer);
+  void _computeCusparseElementMatrix(cusparseCsr& result, cusparseCsr& global, Cell icell, cusparseHandle_t handle, IndexedNodeDoFConnectivityView node_dof);
   void _assembleCusparseBilinearOperatorTRIA3();
 #endif
   void _buildMatrix();
@@ -306,8 +292,6 @@ class FemModule
                                 ax::VariableNodeReal3InView in_node_coord, Real K_e[9]);
 
  private:
-
-
  public:
 
   void _buildMatrixCsrGPU();
@@ -327,6 +311,7 @@ class FemModule
 #endif
   void _assembleCsrBilinearOperatorTRIA3();
   void _buildMatrixCsr();
+
  public:
 
   void _buildMatrixNodeWiseCsr();

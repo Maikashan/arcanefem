@@ -123,14 +123,6 @@ void FemModule::_assembleBuildLessCsrBilinearOperatorTria3()
 {
   Timer::Action timer_blcsr_bili(m_time_stats, "AssembleBuildLessCsrBilinearOperatorTria3");
 
-  std::chrono::_V2::system_clock::time_point lhs_start;
-  double build_time = 0;
-  if (m_register_time) {
-    logger << "-------------------------------------------------------------------------------------\n"
-           << "Using GPU BuildLess CSR with NumArray format\n";
-    lhs_start = std::chrono::high_resolution_clock::now();
-  }
-
   /*
   {
     Timer::Action timer_blcsr_build(m_time_stats, "BuildLessCsrBuildMatrix");
@@ -143,14 +135,6 @@ void FemModule::_assembleBuildLessCsrBilinearOperatorTria3()
     // Build only the row part of the csr matrix on GPU
     // Using scan -> might be improved
     _buildMatrixGpuBuildLessCsr();
-  }
-
-  std::chrono::_V2::system_clock::time_point var_init_start;
-  if (m_register_time) {
-    auto build_stop = std::chrono::high_resolution_clock::now();
-    std::chrono::duration<double> build_duration = build_stop - lhs_start;
-    build_time = build_duration.count();
-    var_init_start = std::chrono::high_resolution_clock::now();
   }
 
   RunQueue* queue = acceleratorMng()->defaultQueue();
@@ -173,15 +157,6 @@ void FemModule::_assembleBuildLessCsrBilinearOperatorTria3()
   auto cnc = m_connectivity_view.cellNode();
   Arcane::ItemGenericInfoListView nodes_infos(this->mesh()->nodeFamily());
   Arcane::ItemGenericInfoListView cells_infos(this->mesh()->cellFamily());
-
-  std::chrono::_V2::system_clock::time_point loop_start;
-  double var_init_time = 0;
-  if (m_register_time) {
-    auto var_init_stop = std::chrono::high_resolution_clock::now();
-    std::chrono::duration<double> var_init_duration = var_init_stop - var_init_start;
-    var_init_time = var_init_duration.count();
-    loop_start = std::chrono::high_resolution_clock::now();
-  }
 
   Timer::Action timer_blcsr_add_compute(m_time_stats, "BuildLessCsrAddAndCompute");
   command << RUNCOMMAND_ENUMERATE(Node, inode, allNodes())
@@ -230,26 +205,6 @@ void FemModule::_assembleBuildLessCsrBilinearOperatorTria3()
       }
     }
   };
-
-  if (m_register_time) {
-    auto lhs_end = std::chrono::high_resolution_clock::now();
-    std::chrono::duration<double> duration = lhs_end - lhs_start;
-    std::chrono::duration<double> loop_duration = lhs_end - loop_start;
-
-    double loop_time = loop_duration.count();
-    double lhs_loc_time = duration.count();
-    logger << "Building time of the csr matrix :" << build_time << "\n"
-           << "Variable initialisation time : " << var_init_time << "\n"
-           << "Computation and Addition time : " << loop_time << "\n"
-           << "LHS Total time : " << lhs_loc_time << "\n"
-           << "Build matrix time in lhs :" << build_time / lhs_loc_time * 100 << "%\n"
-           << "Variable initialisation time in lhs : " << var_init_time / lhs_loc_time * 100 << "%\n"
-           << "Computation and Addition time in lhs : " << loop_time / lhs_loc_time * 100 << "%\n\n"
-           << "-------------------------------------------------------------------------------------\n\n";
-    lhs_time += lhs_loc_time;
-    wbuild << lhs_loc_time << "\n";
-    timer << loop_time << "\n";
-  }
 }
 
 /*---------------------------------------------------------------------------*/
